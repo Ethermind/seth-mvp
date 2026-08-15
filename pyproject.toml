@@ -45,9 +45,24 @@ tui = [
     "rich>=13.7.0",
     "textual>=0.53.0",
 ]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.1.0",
+    "respx>=0.21.0",
+]
 all = [
-    "seth-in-a-box[api,telegram,tui]",
+    "seth-in-a-box[api,telegram,tui,test]",
 ]
 
 [project.scripts]
 seth = "src.main:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

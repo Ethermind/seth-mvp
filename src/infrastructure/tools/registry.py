@@ -169,7 +169,7 @@ class ToolRegistry:
             return None
 
         base_type, *metadata = get_args(hint)
-        schema = self._schema_for_type(base_type)
+        schema = dict(self._schema_for_type(base_type))
         if metadata:
             schema["description"] = str(metadata[0])
 
