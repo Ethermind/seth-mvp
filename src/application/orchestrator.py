@@ -91,6 +91,7 @@ class ConversationOrchestrator:
         }
 
         tool_calls_used: List[str] = []
+        generated_media: List[Dict[str, str]] = []
         final_content = ""
 
         try:
@@ -161,6 +162,9 @@ class ConversationOrchestrator:
                             tool_call_id=result.call_id,
                         )
                     )
+                    # Extract media from tool execution output if present
+                    if result.is_success and result.output:
+                        self._collect_media_from_tool_output(result.output, generated_media)
 
             if hop_tool_requests and audit_record["hop_count"] >= self.max_tool_hops:
                 audit_record["hit_hop_limit"] = True
@@ -173,14 +177,15 @@ class ConversationOrchestrator:
                 await self.history_repo.append_turn(user_id, user_text, final_content)
                 asyncio.create_task(self.graph_memory.add_episode(user_id, user_text, final_content))
 
-            # 6. Extract media references
-            media = self._extract_media_refs(final_content)
+            # 6. Extract media references and combine with tool generated media
+            text_media = self._extract_media_refs(final_content)
+            all_media = self._merge_media(generated_media, text_media)
 
             yield StreamChunk(
                 event_type=StreamEventType.DONE,
                 text=final_content,
                 metadata={
-                    "media": media,
+                    "media": all_media,
                     "tool_calls_used": tool_calls_used,
                     "hop_count": audit_record["hop_count"],
                 },
@@ -221,17 +226,59 @@ class ConversationOrchestrator:
         return messages
 
     def _extract_media_refs(self, response_text: str) -> List[Dict[str, str]]:
+        """Extracts media references mentioned in text by regex."""
         media = []
+        if not response_text:
+            return media
+
         for match in re.finditer(r"(?:storage/)?images/([\w\-_]+\.png)", response_text):
             filename = match.group(1)
             fs_path = self.settings.storage_images_dir / filename
             if fs_path.exists():
-                media.append({"type": "image", "path": str(fs_path), "url": f"/storage/images/{filename}"})
+                media.append({"type": "image", "path": str(fs_path.resolve()), "url": f"/storage/images/{filename}"})
 
         for match in re.finditer(r"(?:storage/)?audio/([\w\-_]+\.mp3)", response_text):
             filename = match.group(1)
             fs_path = self.settings.storage_audio_dir / filename
             if fs_path.exists():
-                media.append({"type": "audio", "path": str(fs_path), "url": f"/storage/audio/{filename}"})
+                media.append({"type": "audio", "path": str(fs_path.resolve()), "url": f"/storage/audio/{filename}"})
 
         return media
+
+    def _collect_media_from_tool_output(self, raw_output: str, media_list: List[Dict[str, str]]) -> None:
+        """Parses tool output JSON and extracts generated image or audio file paths."""
+        try:
+            import json
+            from pathlib import Path
+            data = json.loads(raw_output)
+            if isinstance(data, dict):
+                local_path = data.get("local_path") or data.get("path")
+                if local_path:
+                    p = Path(local_path).resolve()
+                    if p.exists():
+                        ext = p.suffix.lower()
+                        if ext in (".png", ".jpg", ".jpeg", ".webp"):
+                            media_list.append({
+                                "type": "image",
+                                "path": str(p),
+                                "url": f"/storage/images/{p.name}",
+                            })
+                        elif ext in (".mp3", ".wav", ".ogg"):
+                            media_list.append({
+                                "type": "audio",
+                                "path": str(p),
+                                "url": f"/storage/audio/{p.name}",
+                            })
+        except Exception:
+            pass
+
+    def _merge_media(self, tool_media: List[Dict[str, str]], text_media: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Merges and deduplicates media items from tool outputs and text references."""
+        seen_paths = set()
+        merged = []
+        for item in tool_media + text_media:
+            p = item.get("path")
+            if p and p not in seen_paths:
+                seen_paths.add(p)
+                merged.append(item)
+        return merged

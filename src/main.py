@@ -56,9 +56,10 @@ def main() -> None:
     api_parser.add_argument("--port", type=int, default=None, help="Port to bind (default: 8080)")
 
     # Web TUI mode
-    web_parser = subparsers.add_parser("web", help="Launch and serve Web TUI CRT Console")
-    web_parser.add_argument("--host", type=str, default=None, help="Host to bind (default: 127.0.0.1)")
-    web_parser.add_argument("--port", type=int, default=None, help="Port to bind (default: 8080)")
+    web_parser = subparsers.add_parser("web", help="Launch standalone Web TUI CRT Console")
+    web_parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind (default: 127.0.0.1)")
+    web_parser.add_argument("--port", type=int, default=5500, help="Port to bind (default: 5500)")
+    web_parser.add_argument("--api-url", type=str, default="http://127.0.0.1:8080", help="Backend API URL (default: http://127.0.0.1:8080)")
     web_parser.add_argument("--no-browser", action="store_true", help="Do not automatically open browser")
 
     # Telegram mode
@@ -72,7 +73,7 @@ def main() -> None:
     if args.mode == "api":
         run_api(host=args.host, port=args.port)
     elif args.mode == "web":
-        run_web(host=args.host, port=args.port, open_browser=not args.no_browser)
+        run_web(host=args.host, port=args.port, api_url=args.api_url, open_browser=not args.no_browser)
     elif args.mode == "telegram":
         run_telegram()
     elif args.mode == "tui":

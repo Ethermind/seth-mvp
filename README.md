@@ -142,9 +142,6 @@ flowchart TB
     ├── .env                    # Secrets & configuration (git-ignored)
     ├── _env.example            # Environment template
     ├── main.py                 # Unified CLI entrypoint (python -m src.main [api|web|tui|telegram])
-    ├── seth_api.py             # Backward-compatibility API launcher
-    ├── seth_telegram.py        # Backward-compatibility Telegram launcher
-    ├── the_oracle.html         # Legacy standalone Web UI
     ├── config/                 # Pydantic Settings v2 configuration
     ├── domain/                 # Models, dataclasses, protocols, and exceptions
     ├── application/            # Orchestrator, DTOs, and use cases
@@ -156,7 +153,7 @@ flowchart TB
     │   ├── telegram/           # Aiogram-based Telegram bot runner
     │   └── client.py           # Shared Async HTTP Client SDK
     └── prompt/
-        └── seth.md             # System prompt definition
+        └── seth.md             # Canonical system prompt definition
 ```
 
 ---
@@ -187,46 +184,40 @@ pip install -e ".[all]"
 
 ### 🚀 Starting the Services
 
-#### Option A: Using the Unified CLI (`src/main.py`)
+SETH-IN-A-BOX uses a clean, decoupled execution model where presentation interfaces connect to a standalone backend API:
 
-1. **Launch the Web TUI CRT Console (Recommended):**
-   Starts the backend and automatically opens the browser at `http://127.0.0.1:8080/`:
-   ```bash
-   python -m src.main web --host 127.0.0.1 --port 8080
-   ```
-
-2. **Launch the Backend API only (FastAPI + SSE):**
-   ```bash
-   python -m src.main api --host 127.0.0.1 --port 8080
-   ```
-   *(Web TUI is also served at `http://127.0.0.1:8080/`)*
-
-3. **Launch the Terminal User Interface (TUI Console):**
-   In a separate terminal:
-   ```bash
-   python -m src.main tui
-   ```
-
-4. **Launch the Telegram Bot Client:**
-   In a separate terminal:
-   ```bash
-   python -m src.main telegram
-   ```
+#### Step 1: Start the Backend API (FastAPI Engine)
+In your primary terminal, start the centralized AI engine:
+```bash
+python -m src.main api --host 127.0.0.1 --port 8080
+```
+*This starts the memory orchestrator, GPU tool bridges (Stable Diffusion, Kokoro TTS), and SSE endpoints at `http://127.0.0.1:8080`.*
 
 ---
 
-#### Option B: Standalone Launchers & Direct Access
+#### Step 2: Launch Your Preferred Interface(s)
 
-1. **Start Backend API & Web TUI:**
-   ```bash
-   python src/seth_api.py
-   ```
-   Open `http://127.0.0.1:8080/` in your browser.
+In separate terminals, start any combination of client interfaces:
 
-2. **Start Telegram Bot:**
+1. **Web TUI CRT Console (Browser):**
    ```bash
-   python src/seth_telegram.py
+   python -m src.main web --port 5500
    ```
+   *Starts a lightweight, zero-overhead static web server and automatically opens `http://127.0.0.1:5500/` in your browser.*
+   - **Generated Image Rendering:** Displays image cards in full resolution with phosphor glow borders, a click-to-expand button, direct local file path link, one-click copy button, and web storage URL.
+
+2. **Terminal User Interface (Console):**
+   ```bash
+   python -m src.main tui
+   ```
+   *Launches an interactive CRT-styled console terminal with live token streaming.*
+   - **Clickable Media Paths:** When images or audio are generated, outputs OSC 8 clickable `file://` hyperlinks directly in your terminal so you can Ctrl+Click / Cmd+Click to open them in your default system viewer.
+
+3. **Telegram Bot Adapter:**
+   ```bash
+   python -m src.main telegram
+   ```
+   *Connects your Telegram Bot to the API backend for remote access.*
 
 ---
 

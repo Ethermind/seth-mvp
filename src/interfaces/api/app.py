@@ -143,22 +143,27 @@ def create_app(settings: Optional[SethSettings] = None) -> FastAPI:
     )
     app.add_middleware(PrivateNetworkAccessMiddleware)
 
-    # 6. Static Mounts for Generated Media and Web TUI Assets
+    # 6. Static Mounts for Generated Media
     os.makedirs(settings.storage_images_dir, exist_ok=True)
     os.makedirs(settings.storage_audio_dir, exist_ok=True)
     app.mount("/storage/images", StaticFiles(directory=str(settings.storage_images_dir)), name="images")
     app.mount("/storage/audio", StaticFiles(directory=str(settings.storage_audio_dir)), name="audio")
 
-    web_static_dir = Path(__file__).resolve().parent.parent / "web" / "static"
-    if web_static_dir.exists():
-        app.mount("/static", StaticFiles(directory=str(web_static_dir)), name="web_static")
-
-        @app.get("/", include_in_schema=False)
-        @app.get("/oracle", include_in_schema=False)
-        @app.get("/tui", include_in_schema=False)
-        async def serve_web_tui():
-            """Serves the interactive Retro CRT Web TUI console."""
-            return FileResponse(web_static_dir / "index.html")
+    @app.get("/", include_in_schema=False)
+    async def api_root():
+        """Root API endpoint returning service identification."""
+        return {
+            "status": "online",
+            "service": "SETH-IN-A-BOX Backend Engine",
+            "version": "2.0.0",
+            "endpoints": {
+                "status": "/api/status",
+                "register": "/api/register",
+                "chat": "/api/chat",
+                "docs": "/docs",
+            },
+            "web_tui": "Run 'python -m src.main web' to open the Web TUI interface (default: http://127.0.0.1:5500/)",
+        }
 
     # 7. Include Routers
     app.include_router(auth_router)

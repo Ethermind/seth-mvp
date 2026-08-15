@@ -156,7 +156,17 @@ class SethTerminalApp:
                     if media:
                         console.print("\n[bold cyan]📎 Generated Media Attachments:[/bold cyan]")
                         for item in media:
-                            console.print(f"  • {item.get('type').upper()}: {item.get('url')}")
+                            item_type = item.get("type", "media").upper()
+                            local_path = item.get("path")
+                            rel_url = item.get("url")
+                            full_url = f"{self.client.base_url}{rel_url}" if rel_url else ""
+
+                            icon = "🖼️" if item_type == "IMAGE" else "🔊"
+                            console.print(f"  {icon} [bold magenta]{item_type}:[/bold magenta]")
+                            if local_path:
+                                console.print(f"     [dim]Path:[/dim] [link=file://{local_path}][bold underline cyan]{local_path}[/bold underline cyan][/link] [dim](Click to open)[/dim]")
+                            if full_url:
+                                console.print(f"     [dim]URL :[/dim] [link={full_url}][underline yellow]{full_url}[/underline yellow][/link]")
 
             console.print("\n")
 
