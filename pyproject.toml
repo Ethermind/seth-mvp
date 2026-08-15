@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seth-in-a-box"
+version = "2.0.0"
+description = "Multi-interface AI Oracle & Agentic Engine in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Luis Capra" }
+]
+dependencies = [
+    "httpx>=0.27.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.0",
+    "coloredlogs>=15.0.1",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "openai>=1.14.0",
+    "qdrant-client>=1.8.0",
+    "mem0ai>=0.1.0",
+    "graphiti-core>=0.3.0",
+    "sentence-transformers>=2.5.0",
+    "crawl4ai>=0.4.0",
+    "duckduckgo-search>=5.0.0",
+    "torch>=2.2.0",
+    "diffusers>=0.27.0",
+    "kokoro>=0.3.0",
+    "pydub>=0.25.1",
+    "soundfile>=0.12.1",
+    "transformers>=4.40.0",
+]
+telegram = [
+    "python-telegram-bot>=21.0",
+]
+tui = [
+    "rich>=13.7.0",
+    "textual>=0.53.0",
+]
+all = [
+    "seth-in-a-box[api,telegram,tui]",
+]
+
+[project.scripts]
+seth = "src.main:main"

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SETH Terminal UI // Project Oracle</title>
+  
+  <!-- Retro Monospace Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Retro Cyberpunk CRT Stylesheet -->
+  <link rel="stylesheet" href="/static/css/terminal.css">
+</head>
+<body class="crt">
+
+  <div id="app-container" class="box-glow">
+    <!-- Matrix ASCII Canvas Background -->
+    <canvas id="matrix-canvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.12;pointer-events:none;z-index:1;"></canvas>
+
+    <!-- HEADER -->
+    <header class="terminal-header">
+      <div class="header-title-group">
+        <span class="glow-magenta" style="color:var(--color-magenta);font-weight:bold;">■</span>
+        <h1 class="glow-cyan" style="font-size:16px;letter-spacing:2px;font-weight:bold;color:var(--color-cyan);">
+          LOGGING // SETH WEB TUI CONSOLE
+        </h1>
+        <span class="status-badge glow-green">ORACLE:ACTIVE</span>
+      </div>
+
+      <div class="header-controls">
+        <select id="select-lora" class="cyber-select glow-amber">
+          <option value="SETH">LORA: SETH</option>
+          <option value="ORACLE">LORA: ORACLE</option>
+          <option value="GLITCHGOD">LORA: GLITCHGOD</option>
+        </select>
+
+        <button id="btn-settings" class="cyber-btn" title="Open Backend Settings">⚙ SETTINGS</button>
+      </div>
+    </header>
+
+    <!-- SETTINGS PANEL -->
+    <section id="settings-panel" class="settings-panel" style="display:none;">
+      <div class="settings-group">
+        <label class="settings-label">SETH API BASE URL</label>
+        <input id="input-base-url" class="cyber-input" style="width:240px;" placeholder="http://127.0.0.1:8080">
+      </div>
+
+      <div class="settings-group">
+        <label class="settings-label">REGISTRATION_TOKEN</label>
+        <input id="input-reg-token" type="password" class="cyber-input" style="width:180px;" placeholder="Token...">
+      </div>
+
+      <button id="btn-register" class="cyber-btn cyber-btn-green glow-green">REGISTER</button>
+      <span id="reg-status-text" class="glow-magenta" style="color:var(--color-magenta);padding-bottom:4px;"></span>
+
+      <div id="session-info" class="settings-group" style="display:none;flex-direction:row;align-items:center;gap:8px;">
+        <span class="session-text glow-green" style="color:var(--color-green);">● REGISTERED</span>
+        <button id="btn-forget-session" class="cyber-btn cyber-btn-magenta" style="padding:2px 6px;font-size:10px;">FORGET</button>
+      </div>
+    </section>
+
+    <!-- CHAT VIEWPORT -->
+    <main id="chat-log" class="chat-log"></main>
+    <div id="chat-end"></div>
+
+    <!-- STAGING ATTACHMENTS ROW -->
+    <div id="staging-row" class="staging-row" style="display:none;"></div>
+
+    <!-- INPUT CONTROLS -->
+    <footer class="input-section">
+      <div class="input-box-wrapper">
+        <span class="input-prompt-arrow glow-green">&gt;</span>
+        
+        <div id="recording-indicator" style="display:none;align-items:center;gap:8px;padding:4px 0;width:100%;"></div>
+
+        <textarea
+          id="user-input"
+          class="cyber-textarea glow-cyan"
+          placeholder="Type a command, query, or paste large snippets..."
+          rows="1"
+        ></textarea>
+
+        <button id="btn-toggle-expand" class="cyber-btn" style="border:none;margin-left:4px;color:var(--color-cyan);" title="Expand/Collapse input">⤢</button>
+      </div>
+
+      <div class="input-toolbar">
+        <div class="toolbar-actions">
+          <input id="file-input" type="file" accept="image/*" style="display:none;">
+          <button id="btn-image" class="cyber-btn glow-cyan">📎 IMAGE</button>
+          <button id="btn-audio" class="cyber-btn cyber-btn-magenta glow-magenta">● AUDIO</button>
+
+          <select id="select-regulator" class="cyber-select" style="border-color:rgba(0,240,255,0.4);color:var(--color-cyan);">
+            <option value="RIGOROUS">REGULATOR: RIGOROUS</option>
+            <option value="CHAOTIC">REGULATOR: CHAOTIC</option>
+            <option value="VERBOSE">REGULATOR: VERBOSE</option>
+          </select>
+        </div>
+
+        <button id="btn-send" class="cyber-btn cyber-btn-green glow-green" style="padding:4px 16px;letter-spacing:1px;font-weight:bold;">
+          SEND [↵]
+        </button>
+      </div>
+
+      <!-- TELEMETRY FOOTER STRIP -->
+      <div class="telemetry-strip">
+        <span class="glow-amber" style="color:var(--color-amber);">TOKENS: <span id="token-counter" style="color:#ffffff;">1403</span></span>
+        
+        <div id="telemetry-vram" style="display:inline-flex;gap:12px;">
+          <span>VRAM [░░░░░░░░░░] --/--GB</span>
+        </div>
+
+        <div style="display:inline-flex;gap:12px;">
+          <span id="dot-qdrant" class="telemetry-indicator">● QDRANT</span>
+          <span id="dot-graphiti" class="telemetry-indicator">● GRAPHITI</span>
+          <span id="dot-vllm" class="telemetry-indicator">● vLLM</span>
+          <span id="dot-whisper" class="telemetry-indicator">● WHISPER</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- DRAG AND DROP OVERLAY -->
+    <div id="dropzone" class="dropzone-overlay" style="display:none;">
+      <pre class="glow-cyan" style="color:var(--color-cyan);text-align:center;">
+┌──────────────────────────────┐
+│   ⇩  DROP IMAGE INTO SETH  ⇩  │
+└──────────────────────────────┘
+      </pre>
+    </div>
+  </div>
+
+  <!-- Main ES Module Script -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
