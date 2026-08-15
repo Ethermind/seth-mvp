@@ -4,7 +4,6 @@ Global test fixtures and protocol mock implementations for SETH-IN-A-BOX test su
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, List, Optional
 import pytest
@@ -12,14 +11,11 @@ import pytest
 from src.config.settings import SethSettings
 from src.domain.models import (
     Message,
-    RegulatorPresets,
     RegulatorState,
     Role,
     StreamChunk,
     StreamEventType,
-    ToolCall,
 )
-from src.domain.protocols import ConversationHistory, GraphMemory, LLMProvider, SemanticMemory, SessionStore
 
 
 @pytest.fixture

@@ -10,9 +10,8 @@ from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import time
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Optional
 
 from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 import torch

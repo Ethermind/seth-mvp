@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta
 import logging
-from typing import Any, Dict, List
+from typing import Any, List
 
 from mem0 import Memory
 from src.config.settings import SethSettings, get_settings

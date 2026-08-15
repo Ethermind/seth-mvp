@@ -7,7 +7,6 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 import os
-from pathlib import Path
 
 import coloredlogs
 from src.config.settings import SethSettings, get_settings

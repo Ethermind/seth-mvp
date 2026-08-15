@@ -4,7 +4,6 @@ Unit tests verifying Protocol definitions and structural compliance (src.domain.
 
 from __future__ import annotations
 
-import inspect
 from src.domain.protocols import (
     AudioTranscriber,
     ConversationHistory,

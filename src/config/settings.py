@@ -5,11 +5,10 @@ Centralized, typed configuration for SETH-IN-A-BOX using Pydantic Settings v2.
 from __future__ import annotations
 
 from functools import lru_cache
-import os
 from pathlib import Path
 from typing import List
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Base anchors

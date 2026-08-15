@@ -6,17 +6,12 @@ Powered by Rich with real-time SSE token streaming and live telemetry.
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
 from typing import Optional
 
 from rich.console import Console
-from rich.live import Live
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
-from rich.text import Text
 
 from src.config.settings import SethSettings, get_settings
 from src.interfaces.client import SethClient

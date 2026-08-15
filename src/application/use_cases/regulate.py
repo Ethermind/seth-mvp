@@ -5,13 +5,12 @@ Use Case: Dynamic Inference Regulation based on semantic intent embeddings.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import replace
 import json
 import logging
 import os
 from pathlib import Path
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from sentence_transformers import SentenceTransformer
 import torch

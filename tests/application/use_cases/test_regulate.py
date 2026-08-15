@@ -11,7 +11,7 @@ import torch
 
 from src.application.use_cases.regulate import RegulateInferenceUseCase, UserStateManager
 from src.config.settings import SethSettings
-from src.domain.models import RegulatorPresets, RegulatorState
+from src.domain.models import RegulatorState
 
 
 def test_user_state_manager_save_and_load(tmp_path: Path):

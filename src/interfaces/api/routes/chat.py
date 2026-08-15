@@ -11,11 +11,10 @@ import io
 import json
 import logging
 import os
-from pathlib import Path
 from typing import AsyncIterator, Optional, Tuple
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import StreamingResponse
 from pydub import AudioSegment
 

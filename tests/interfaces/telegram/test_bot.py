@@ -4,9 +4,6 @@ Unit tests for TelegramBotRunner (src.interfaces.telegram.bot).
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-import pytest
-
 from src.config.settings import SethSettings
 from src.interfaces.telegram.bot import TelegramBotRunner
 

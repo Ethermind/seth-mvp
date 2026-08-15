@@ -10,7 +10,6 @@ from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 from typing import Annotated, Any, Dict, Optional
 
 from src.infrastructure.tools.registry import tool

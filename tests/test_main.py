@@ -8,7 +8,7 @@ import sys
 from unittest.mock import patch
 import pytest
 
-from src.main import main, run_api, run_telegram, run_tui
+from src.main import main
 
 
 def test_main_help_when_no_mode(capsys):
