@@ -53,13 +53,13 @@ def main() -> None:
     # API mode
     api_parser = subparsers.add_parser("api", help="Launch FastAPI REST & SSE Service")
     api_parser.add_argument("--host", type=str, default=None, help="Host to bind (default: 127.0.0.1)")
-    api_parser.add_argument("--port", type=int, default=None, help="Port to bind (default: 8080)")
+    api_parser.add_argument("--port", type=int, default=None, help="Port to bind (default: configured by API_PORT)")
 
     # Web TUI mode
     web_parser = subparsers.add_parser("web", help="Launch standalone Web TUI CRT Console")
     web_parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to bind (default: 127.0.0.1)")
     web_parser.add_argument("--port", type=int, default=5500, help="Port to bind (default: 5500)")
-    web_parser.add_argument("--api-url", type=str, default="http://127.0.0.1:8080", help="Backend API URL (default: http://127.0.0.1:8080)")
+    web_parser.add_argument("--api-url", type=str, default="http://127.0.0.1:18080", help="Backend API URL (default: http://127.0.0.1:18080)")
     web_parser.add_argument("--no-browser", action="store_true", help="Do not automatically open browser")
 
     # Telegram mode

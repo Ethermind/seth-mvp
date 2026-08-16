@@ -123,7 +123,7 @@ class SethSettings(BaseSettings):
         alias="API_HOST",
     )
     api_port: int = Field(
-        default=8080,
+        default=18080,
         alias="API_PORT",
     )
     cors_allowed_origins: str = Field(
@@ -137,7 +137,7 @@ class SethSettings(BaseSettings):
         alias="TELEGRAM_TOKEN",
     )
     seth_api_base_url: str = Field(
-        default="http://127.0.0.1:8080",
+        default="http://127.0.0.1:18080",
         alias="SETH_API_BASE_URL",
     )
 
