@@ -7,7 +7,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, List, Optional
 import pytest
-
 from src.config.settings import SethSettings
 from src.domain.models import (
     Message,

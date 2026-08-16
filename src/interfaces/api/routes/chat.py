@@ -11,7 +11,7 @@ import io
 import json
 import logging
 import os
-from typing import AsyncIterator, Optional, Tuple
+from typing import AsyncIterator, Optional, Tuple, Any, List
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
@@ -31,7 +31,7 @@ from src.interfaces.api.dependencies import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Chat"])
-
+1
 
 @router.post("/chat")
 async def chat_endpoint(
