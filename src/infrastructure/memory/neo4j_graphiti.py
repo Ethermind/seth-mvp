@@ -17,10 +17,20 @@ from graphiti_core.llm_client import OpenAIClient, LLMConfig
 from graphiti_core.embedder.client import EmbedderClient
 from graphiti_core.cross_encoder.bge_reranker_client import BGERerankerClient
 from graphiti_core.llm_client.gliner2_client import GLiNER2Client
+from graphiti_core.cross_encoder.bge_reranker_client import BGERerankerClient
+from sentence_transformers import CrossEncoder
 
 from src.config.settings import SethSettings, get_settings
 
 logger = logging.getLogger(__name__)
+
+
+class _CpuBgeRerankerClient(BGERerankerClient):
+    """CPU BGERerankerClient to avoid extra VRAM usage."""
+
+    def __init__(self) -> None:
+        self.model = CrossEncoder("BAAI/bge-reranker-v2-m3", device="cpu")
+
 
 
 class _LocalBgeEmbedder(EmbedderClient):
@@ -78,7 +88,7 @@ class GraphitiRelationalMemory:
                     password=self.settings.neo4j_password,
                     llm_client=llm_client,
                     embedder=_LocalBgeEmbedder(embedder_model),
-                    cross_encoder=BGERerankerClient(),
+                    cross_encoder=_CpuBgeRerankerClient(),
                 )
 
                 logger.info("🕸️ [GRAPHITI] Building indices and constraints in Neo4j...")

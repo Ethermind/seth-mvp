@@ -16,6 +16,7 @@ __pycache__/
 # RUNTIME STATES & LOCAL STORAGE
 # ==============================================================================
 BUG.md
+bugs.md
 OLD/
 storage/
 models/
