@@ -31,7 +31,6 @@ from src.interfaces.api.dependencies import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Chat"])
-1
 
 @router.post("/chat")
 async def chat_endpoint(
