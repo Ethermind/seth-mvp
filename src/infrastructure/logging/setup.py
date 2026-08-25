@@ -8,6 +8,8 @@ from datetime import datetime
 import logging
 import os
 
+import warnings
+
 import coloredlogs
 from src.config.settings import SethSettings, get_settings
 
@@ -15,6 +17,11 @@ from src.config.settings import SethSettings, get_settings
 def setup_logging(settings: SethSettings | None = None) -> None:
     """Configures colored logs, file handlers and suppresses third-party noise."""
     settings = settings or get_settings()
+
+    # Suppress benign library deprecation/compatibility warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", message=".*Qdrant client version.*")
+    warnings.filterwarnings("ignore", message=".*Support for class-based `config` is deprecated.*")
 
     # 1. Colored terminal logs
     coloredlogs.install(
@@ -37,8 +44,17 @@ def setup_logging(settings: SethSettings | None = None) -> None:
     )
 
     # 2. Silence third-party noise
-    for noisy in ("httpx", "httpcore", "openai", "urllib3", "asyncio", "watchfiles"):
-        logging.getLogger(noisy).setLevel(logging.WARNING)
+    for noisy in (
+        "httpx",
+        "httpcore",
+        "openai",
+        "urllib3",
+        "asyncio",
+        "watchfiles",
+        "posthog",
+        "neo4j.notifications",
+    ):
+        logging.getLogger(noisy).setLevel(logging.ERROR)
 
     # 3. Mem0 dedicated file log
     mem0_log_path = settings.log_mem0_path or str(settings.project_root / "storage" / "logs" / "mem0.log")

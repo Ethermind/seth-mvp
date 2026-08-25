@@ -124,77 +124,91 @@ flowchart TB
 
 ## 4. Directory & Module Structure
 
+```text
 .
+├── README.md                   # Project documentation
+├── pyproject.toml              # Packaging and dependency configuration
 ├── docker-compose.yml          # Infrastructure stack (vLLM, Whisper, Qdrant, Neo4j)
+├── conversations/              # Per-user short-term history (JSONL)
+├── models/
+│   ├── dreamshaper_8.safetensors               # Local image weights
+│   └── tool_chat_template_gemma4.jinja         # Custom chat template for vLLM
+├── storage/
+│   ├── images/                 # Generated images
+│   ├── audio/                  # Generated speech & uploaded audio
+│   ├── state/                  # Per-user regulator state files (seth_<user_id>.state)
+│   ├── logs/                   # Run logs, reasoning hop audit records, and mem0 logs
+│   ├── allowed_api_users.json  # Backend session allow-list
+│   └── telegram_sessions.json  # Telegram ID to API Session ID mapping
 └── src/
     ├── main.py                 # Unified CLI launcher (api, web, tui, telegram)
     ├── _env.example            # Template for environment variables
     ├── .env                    # Local runtime secrets (git-ignored)
     ├── prompt/
     │   └── seth.md             # Canonical system prompt and personality rules
-│
-├── config/                     # Centralized Configuration Layer
-│   ├── __init__.py
-│   └── settings.py             # Pydantic Settings v2 with cached singleton
-│
-├── domain/                     # Domain Layer (Zero External Framework Dependencies)
-│   ├── __init__.py
-│   ├── models.py               # Message, Role, StreamChunk, RegulatorState, SystemStatus
-│   ├── protocols.py            # Structural typing.Protocol definitions
-│   └── exceptions.py           # Domain exceptions (InferenceEngineError, ToolExecutionError)
-│
-├── application/                # Application Layer (Use Cases & Orchestration)
-│   ├── __init__.py
-│   ├── orchestrator.py         # Multi-hop execution loop and stream assembly
-│   ├── dto.py                  # Data Transfer Objects
-│   └── use_cases/
-│       ├── __init__.py
-│       ├── authenticate.py     # Token validation and session creation
-│       ├── regulate.py         # Dynamic inference parameter regulation
-│       └── telemetry.py        # Microservice health checks and VRAM probes
-│
-├── infrastructure/             # Infrastructure Layer (Adapters & Integrations)
-│   ├── __init__.py
-│   ├── llm/
-│   │   ├── vllm_client.py      # OpenAI-compatible vLLM adapter
-│   │   ├── context_guard.py    # AutoTokenizer token estimation guardrail
-│   │   └── accumulator.py      # Streaming delta accumulator for tool calls
-│   ├── memory/
-│   │   ├── jsonl_history.py    # Short-term context with JSONL file locking
-│   │   ├── qdrant_mem0.py      # Mem0 semantic long-term memory in Qdrant
-│   │   └── neo4j_graphiti.py   # Graphiti temporal knowledge graph in Neo4j
-│   ├── tools/
-│   │   ├── registry.py         # Tool decorator and schema reflection engine
-│   │   ├── image_diffusion.py  # Stable Diffusion with idle auto-offload
-│   │   ├── speech_kokoro.py    # Kokoro TTS Spanish audio synthesis
-│   │   ├── web_search.py       # DuckDuckGo + Crawl4AI web extraction
-│   │   └── code_inspector.py   # AST Python code self-inspector
-│   ├── security/
-│   │   └── json_sessions.py    # On-disk session whitelist store
-│   ├── telemetry/
-│   │   ├── nvidia_smi.py       # NVML VRAM hardware parser
-│   │   └── tcp_probe.py        # Non-invasive socket reachability probes
-│   └── logging/
-│       ├── setup.py            # ColoredLogs and logger hierarchy configuration
-│       └── audit.py            # Reasoning audit logger with 30-day retention
-│
-└── interfaces/                 # Presentation Layer (API & Clients)
-    ├── __init__.py
-    ├── client.py               # Asynchronous Python SDK (SethClient)
-    ├── api/                    # FastAPI Backend Service
-    │   ├── app.py              # FastAPI factory, lifespan, and static mounting
-    │   ├── dependencies.py     # Dependency injection providers (Depends)
-    │   ├── routes/             # Route handlers (auth, chat, status)
-    │   └── middleware/         # Private Network Access & Log filters
-    ├── web/                    # Standalone Web TUI Launcher & Static Assets
-    │   ├── app.py              # HTTP static server with API probe
-    │   └── static/index.html   # Cyberpunk CRT Console Single-Page App
-    ├── tui/                    # Interactive Terminal Console (Rich)
-    │   └── app.py              # Live streaming TUI client
-    └── telegram/               # Telegram Bot Bridge
-        ├── bot.py              # Telegram polling runner
-        ├── handlers.py         # Media and message handlers
-        └── session_store.py    # Telegram ID to API Session ID mapper
+    │
+    ├── config/                 # Centralized Configuration Layer
+    │   ├── __init__.py
+    │   └── settings.py         # Pydantic Settings v2 with cached singleton
+    │
+    ├── domain/                 # Domain Layer (Zero External Framework Dependencies)
+    │   ├── __init__.py
+    │   ├── models.py           # Message, Role, StreamChunk, RegulatorState, SystemStatus
+    │   ├── protocols.py        # Structural typing.Protocol definitions
+    │   └── exceptions.py       # Domain exceptions (InferenceEngineError, ToolExecutionError)
+    │
+    ├── application/            # Application Layer (Use Cases & Orchestration)
+    │   ├── __init__.py
+    │   ├── orchestrator.py     # Multi-hop execution loop and stream assembly
+    │   ├── dto.py              # Data Transfer Objects
+    │   └── use_cases/
+    │       ├── __init__.py
+    │       ├── authenticate.py # Token validation and session creation
+    │       ├── regulate.py     # Dynamic inference parameter regulation
+    │       └── telemetry.py    # Microservice health checks and VRAM probes
+    │
+    ├── infrastructure/         # Infrastructure Layer (Adapters & Integrations)
+    │   ├── __init__.py
+    │   ├── llm/
+    │   │   ├── vllm_client.py  # OpenAI-compatible vLLM adapter
+    │   │   ├── context_guard.py# AutoTokenizer token estimation guardrail
+    │   │   └── accumulator.py  # Streaming delta accumulator for tool calls
+    │   ├── memory/
+    │   │   ├── jsonl_history.py# Short-term context with JSONL file locking
+    │   │   ├── qdrant_mem0.py  # Mem0 semantic long-term memory in Qdrant
+    │   │   └── neo4j_graphiti.py# Graphiti temporal knowledge graph in Neo4j
+    │   ├── tools/
+    │   │   ├── registry.py     # Tool decorator and schema reflection engine
+    │   │   ├── image_diffusion.py # Stable Diffusion with idle auto-offload
+    │   │   ├── speech_kokoro.py# Kokoro TTS Spanish audio synthesis
+    │   │   ├── web_search.py   # DuckDuckGo + Crawl4AI web extraction
+    │   │   └── code_inspector.py # AST Python code self-inspector
+    │   ├── security/
+    │   │   └── json_sessions.py# On-disk session whitelist store
+    │   ├── telemetry/
+    │   │   ├── nvidia_smi.py   # NVML VRAM hardware parser
+    │   │   └── tcp_probe.py    # Non-invasive socket reachability probes
+    │   └── logging/
+    │       ├── setup.py        # ColoredLogs and logger hierarchy configuration
+    │       └── audit.py        # Reasoning audit logger with 30-day retention
+    │
+    └── interfaces/             # Presentation Layer (API & Clients)
+        ├── __init__.py
+        ├── client.py           # Asynchronous Python SDK (SethClient)
+        ├── api/                # FastAPI Backend Service
+        │   ├── app.py          # FastAPI factory, lifespan, and static mounting
+        │   ├── dependencies.py # Dependency injection providers (Depends)
+        │   ├── routes/         # Route handlers (auth, chat, status)
+        │   └── middleware/     # Private Network Access & Log filters
+        ├── web/                # Standalone Web TUI Launcher & Static Assets
+        │   ├── app.py          # HTTP static server with API probe
+        │   └── static/index.html # Cyberpunk CRT Console Single-Page App
+        ├── tui/                # Interactive Terminal Console (Rich)
+        │   └── app.py          # Live streaming TUI client
+        └── telegram/           # Telegram Bot Bridge
+            ├── bot.py          # Telegram polling runner
+            ├── handlers.py     # Media and message handlers
+            └── session_store.py# Telegram ID to API Session ID mapper
 ```
 
 ---

@@ -96,10 +96,16 @@ class GraphitiRelationalMemory:
                 )
 
                 logger.info("🕸️ [GRAPHITI] Building indices and constraints in Neo4j...")
+                driver_logger = logging.getLogger("graphiti_core.driver.neo4j_driver")
+                prev_level = driver_logger.level
                 try:
+                    # Suppress benign 'EquivalentSchemaRuleAlreadyExists' index logs on restarts
+                    driver_logger.setLevel(logging.CRITICAL)
                     await graphiti.build_indices_and_constraints()
                 except Exception as e:
                     logger.warning("⚠️ [GRAPHITI] Indices warm-up warning (non-fatal): %s", e)
+                finally:
+                    driver_logger.setLevel(prev_level)
 
                 self._graphiti_instance = graphiti
 
