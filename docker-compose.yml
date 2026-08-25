@@ -1,0 +1,122 @@
+services:
+  vllm:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM vllm/vllm-openai:v0.27.1
+        RUN /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages 'transformers==5.14.1'
+    image: seth-vllm:v0.27.1-transformers5.14.1
+    container_name: seth-vllm
+    restart: unless-stopped
+    gpus: all
+    ipc: host
+    ports:
+      - "8000:8000"
+    environment:
+      NVIDIA_VISIBLE_DEVICES: "0"
+      CUDA_DEVICE_ORDER: "PCI_BUS_ID"
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      HF_HOME: /root/.cache/huggingface
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+      - ./models/tool_chat_template_gemma4.jinja:/models/tool_chat_template_gemma4.jinja:ro
+    command:
+      - --model
+      - abhishekchohan/gemma-4-26B-A4B-it-abliterated-AWQ
+      - --tool-call-parser
+      - gemma4
+      - --reasoning-parser
+      - gemma4
+      - --enable-auto-tool-choice
+      - --max-model-len
+      - "131072"
+      - --max-num-batched-tokens
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.94"
+      - --enable-prefix-caching
+      - --tensor-parallel-size
+      - "1"
+      - --no-enable-log-requests
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --kv-cache-dtype
+      - fp8
+      - --generation-config
+      - vllm
+      - --chat-template-content-format
+      - openai
+      - --chat-template
+      - /models/tool_chat_template_gemma4.jinja
+
+  whisper:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
+
+        ENV DEBIAN_FRONTEND=noninteractive
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+        ENV HF_HOME=/root/.cache/huggingface
+        ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
+        RUN apt-get update \
+            && apt-get install -y --no-install-recommends python3 python3-pip ffmpeg \
+            && rm -rf /var/lib/apt/lists/* \
+            && python3 -m pip install --no-cache-dir \
+                faster-whisper-server==0.0.2 \
+                faster-whisper==1.2.1 \
+                ctranslate2==4.7.2 \
+            && echo '[project]' > /usr/local/lib/python3.12/dist-packages/pyproject.toml \
+            && echo 'version = "0.0.2"' >> /usr/local/lib/python3.12/dist-packages/pyproject.toml
+
+        ENTRYPOINT ["faster-whisper-server"]
+    image: seth-whisper:0.0.2-fw1.2.1-ct2.4.7.2
+    container_name: seth-whisper
+    restart: unless-stopped
+    gpus: all
+    ports:
+      - "8010:8010"
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      HF_HOME: /root/.cache/huggingface
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+      - large-v3  
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    container_name: seth-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: seth-neo4j-graphiti
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/TuPasswordSeguro123!
+    volumes:
+      - neo4j_logs:/logs
+      - neo4j_data:/data
+
+volumes:
+  huggingface_cache:
+  qdrant_data:
+  neo4j_logs:
+  neo4j_data:
