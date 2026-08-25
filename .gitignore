@@ -15,14 +15,11 @@ __pycache__/
 # ==============================================================================
 # RUNTIME STATES & LOCAL STORAGE
 # ==============================================================================
-BUG.md
 bugs.md
-OLD/
 storage/
-models/
-images/
+models/*
+!models/tool_chat_template_gemma4.jinja
 conversations/
-*.state
 
 # ==============================================================================
 # LOCAL DATABASE DATA & LOGS

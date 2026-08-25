@@ -128,9 +128,11 @@ flowchart TB
 .
 ├── README.md                   # Project documentation
 ├── pyproject.toml              # Packaging and dependency configuration
+├── docker-compose.yml          # Infrastructure stack (vLLM, Whisper, Qdrant, Neo4j)
 ├── conversations/              # Per-user short-term history (JSONL)
 ├── models/
-│   └── dreamshaper_8.safetensors # Local image weights
+│   ├── dreamshaper_8.safetensors               # Local image weights
+│   └── tool_chat_template_gemma4.jinja         # Custom chat template for vLLM
 ├── storage/
 │   ├── images/                 # Generated images
 │   ├── audio/                  # Generated speech & uploaded audio
@@ -161,10 +163,9 @@ flowchart TB
 ## ⚡ Quick Start & Initialization Commands
 
 ### 1. Prerequisites
-* Python 3.10+ (Python 3.11+ recommended).
-* An OpenAI-compatible LLM endpoint (vLLM, SGLang, Ollama, or LM Studio).
-* `faster-whisper-server` for audio transcription.
-* Qdrant vector database and Neo4j graph database running (e.g. via Docker).
+* **Docker Engine ≥ 24** and **Docker Compose v2** (`docker compose`).
+* **NVIDIA GPU** with drivers installed and **NVIDIA Container Toolkit** configured (`nvidia-ctk`).
+* Python 3.10+ (Python 3.11+ recommended) for running SETH's application code.
 
 ### 2. Environment Setup
 Create and configure your `.env` file from the provided example:
@@ -184,24 +185,52 @@ pip install -e ".[all]"
 
 ### 🚀 Starting the Services
 
-SETH-IN-A-BOX uses a clean, decoupled execution model where presentation interfaces connect to a standalone backend API:
+SETH-IN-A-BOX uses a clean, decoupled execution model: infrastructure services run inside Docker containers, while the application code runs on the host.
 
-#### Step 1: Start the Backend API (FastAPI Engine)
+#### Step 1: Start the Infrastructure Stack (Docker Compose)
+
+The `docker-compose.yml` at the project root defines the full infrastructure layer. Bring everything up with a single command:
+
+```bash
+docker compose up -d
+```
+
+This will build (first run only) and start the following containers:
+
+| Container | Image / Base | Port | Purpose |
+|---|---|---|---|
+| `seth-vllm` | `vllm/vllm-openai:v0.27.1` + `transformers 5.14.1` | `8000` | OpenAI-compatible LLM inference (Gemma 4 26B AWQ) |
+| `seth-whisper` | `nvidia/cuda:12.8.1` + `faster-whisper-server 0.0.2` | `8010` | Speech-to-text transcription (Whisper `large-v3`) |
+| `seth-qdrant` | `qdrant/qdrant:v1.15.5` | `6333` | Vector database for semantic long-term memory |
+| `seth-neo4j-graphiti` | `neo4j:5.26-community` | `7474` / `7687` | Graph database for temporal knowledge graph |
+
+> [!NOTE]
+> The vLLM and Whisper containers require GPU access. Docker Compose is configured with `gpus: all`. Make sure the NVIDIA Container Toolkit is properly installed.
+
+> [!TIP]
+> On the first run, the vLLM container will download the model weights from Hugging Face into a Docker volume (`huggingface_cache`). This may take several minutes depending on your connection. Subsequent starts are instant.
+
+Verify all services are healthy:
+```bash
+docker compose ps
+```
+
+#### Step 2: Start the Backend API (FastAPI Engine)
 In your primary terminal, start the centralized AI engine:
 ```bash
-python -m src.main api --host 127.0.0.1 --port 8080
+python -m src.main api
 ```
 *This starts the memory orchestrator, GPU tool bridges (Stable Diffusion, Kokoro TTS), and SSE endpoints at `http://127.0.0.1:8080`.*
 
 ---
 
-#### Step 2: Launch Your Preferred Interface(s)
+#### Step 3: Launch Your Preferred Interface(s)
 
 In separate terminals, start any combination of client interfaces:
 
 1. **Web TUI CRT Console (Browser):**
    ```bash
-   python -m src.main web --port 5500
+   python -m src.main web
    ```
    *Starts a lightweight, zero-overhead static web server and automatically opens `http://127.0.0.1:5500/` in your browser.*
    - **Generated Image Rendering:** Displays image cards in full resolution with phosphor glow borders, a click-to-expand button, direct local file path link, one-click copy button, and web storage URL.
