@@ -390,10 +390,10 @@ cp src/_env.example src/.env
 docker compose up -d
 
 # 4. Launch Backend API (Primary Node)
-python -m src.main api --host 127.0.0.1 --port 8080
+python -m src.main api
 
 # 5. Launch Presentation Clients (in separate terminals)
-python -m src.main tui                        # Terminal User Interface
-python -m src.main web --port 5500           # Standalone Web CRT Console
+python -m src.main tui                       # Terminal User Interface
+python -m src.main web                       # Standalone Web CRT Console
 python -m src.main telegram                  # Telegram Bot Bridge
 ```
