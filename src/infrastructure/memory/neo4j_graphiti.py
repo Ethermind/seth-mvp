@@ -17,12 +17,17 @@ from graphiti_core.llm_client import OpenAIClient, LLMConfig
 from graphiti_core.embedder.client import EmbedderClient
 from graphiti_core.cross_encoder.bge_reranker_client import BGERerankerClient
 from graphiti_core.llm_client.gliner2_client import GLiNER2Client
-from graphiti_core.cross_encoder.bge_reranker_client import BGERerankerClient
 from sentence_transformers import CrossEncoder
 
 from src.config.settings import SethSettings, get_settings
 
 logger = logging.getLogger(__name__)
+
+# Suppress noisy Neo4j property-key warnings (01N52) emitted by graphiti-core's
+# Cypher queries referencing properties that don't exist on all nodes yet.
+# These are non-fatal: Neo4j returns null for missing properties.
+logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
+logging.getLogger("posthog").setLevel(logging.ERROR)
 
 
 class _CpuBgeRerankerClient(BGERerankerClient):
@@ -30,7 +35,6 @@ class _CpuBgeRerankerClient(BGERerankerClient):
 
     def __init__(self) -> None:
         self.model = CrossEncoder("BAAI/bge-reranker-v2-m3", device="cpu")
-
 
 
 class _LocalBgeEmbedder(EmbedderClient):

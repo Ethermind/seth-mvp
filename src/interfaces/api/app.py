@@ -7,7 +7,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,13 +70,31 @@ def create_app(settings: Optional[SethSettings] = None) -> FastAPI:
             self.gr_mem = gr_mem
 
         @tool
-        async def save_long_term_memory(self, user_input: str, response: str, user_id: str = "anonymous") -> str:
+        async def save_long_term_memory(
+            self,
+            user_input: Annotated[
+                str,
+                "The user's original message or statement containing the fact, preference, or constraint to remember.",
+            ],
+            response: Annotated[
+                str,
+                "The assistant's response that contextualizes and confirms the information being saved.",
+            ],
+            user_id: str = "anonymous",
+        ) -> str:
             """Persists facts, preferences, decisions, or constraints into long-term memory."""
             ok = await self.sem_mem.save(user_id=user_id, fact=user_input, response=response)
             return '{"status": "ok"}' if ok else '{"status": "error"}'
 
         @tool
-        async def query_relationship_graph(self, query: str, user_id: str = "anonymous") -> str:
+        async def query_relationship_graph(
+            self,
+            query: Annotated[
+                str,
+                "Natural language query describing the entities, relationships, or temporal patterns to search for in the knowledge graph.",
+            ],
+            user_id: str = "anonymous",
+        ) -> str:
             """Queries the temporal knowledge graph for relationships between entities over time."""
             facts = await self.gr_mem.query_relations(user_id=user_id, query=query)
             return "\n".join(facts) if facts else "No relevant relationships found in the graph."
