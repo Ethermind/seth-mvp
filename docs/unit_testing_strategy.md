@@ -28,37 +28,63 @@ The testing architecture for **SETH-IN-A-BOX** is designed around four non-negot
 ```text
 tests/
 ├── conftest.py                     # Global pytest fixtures, mock providers, and test settings
-├── unit/                           # Isolated unit tests (<10ms per test)
-│   ├── domain/
-│   │   ├── test_models.py          # Message, ToolCall, RegulatorState, SystemStatus, serialization
-│   │   ├── test_protocols.py       # Structural typing verification
-│   │   └── test_exceptions.py      # Exception hierarchy and message formatting
-│   ├── config/
-│   │   └── test_settings.py        # Pydantic Settings v2 validation, paths, and environment parsing
-│   ├── application/
-│   │   ├── test_orchestrator.py    # ConversationOrchestrator multi-hop loop, tools, and streams
-│   │   ├── test_use_cases.py       # Authenticate, Regulate, and Telemetry use cases
-│   │   └── test_dto.py             # DTO dataclass initialization and attributes
-│   ├── infrastructure/
-│   │   ├── test_llm_accumulator.py # Tool call delta reconstruction and reasoning streaming
+├── test_main.py                    # Unified CLI entrypoint launcher tests
+├── domain/
+│   ├── test_models.py              # Message, ToolCall, RegulatorState, SystemStatus, serialization
+│   ├── test_protocols.py           # Structural typing verification
+│   └── test_exceptions.py          # Exception hierarchy and message formatting
+├── config/
+│   └── test_settings.py            # Pydantic Settings v2 validation, paths, and environment parsing
+├── application/
+│   ├── test_orchestrator.py        # ConversationOrchestrator multi-hop loop, tools, and streams
+│   ├── test_dto.py                 # DTO dataclass initialization and attributes
+│   └── use_cases/
+│       ├── test_authenticate.py    # AuthenticateSessionUseCase
+│       ├── test_regulate.py        # RegulateInferenceUseCase & UserStateManager
+│       └── test_telemetry.py       # CollectTelemetryUseCase
+├── infrastructure/
+│   ├── llm/
+│   │   ├── test_accumulator.py     # Tool call delta reconstruction and reasoning streaming
 │   │   ├── test_context_guard.py   # Token estimation and dynamic output clamping
-│   │   ├── test_vllm_client.py     # OpenAI-compatible vLLM adapter streaming & non-streaming
-│   │   ├── test_tool_registry.py   # @tool discovery, type hint schema generation, dispatch
+│   │   └── test_vllm_client.py     # OpenAI-compatible vLLM adapter streaming & non-streaming
+│   ├── memory/
 │   │   ├── test_jsonl_history.py   # Short-term memory sliding window and file locking
-│   │   ├── test_mem0_memory.py     # Semantic long-term memory adapter (mocked Mem0/Qdrant)
-│   │   ├── test_graphiti_memory.py # Relational temporal graph adapter (mocked Graphiti/Neo4j)
-│   │   ├── test_tools_concrete.py  # Stable Diffusion idle timer, Kokoro TTS, Crawl4AI, Code Inspector
-│   │   ├── test_json_sessions.py   # Session authorization whitelist and token exchange
-│   │   ├── test_telemetry_probes.py# Nvidia-SMI parsing and TCP socket probes
-│   │   └── test_audit_logger.py    # Reasoning audit JSON logger and 30-day retention pruning
-│   └── interfaces/
-│       ├── test_api_routes.py      # FastAPI endpoints: /api/register, /api/chat (SSE), /api/status
-│       ├── test_client_sdk.py      # SethClient HTTPX methods with respx mocking
-│       ├── test_telegram_bridge.py # Telegram bot handlers, filters, and session store
-│       └── test_tui_app.py         # Terminal TUI status panel rendering and user loop
-└── integration/                    # Multi-component workflow tests
-    ├── test_e2e_chat_stream.py     # End-to-end conversation flow with mocked LLM provider
-    └── test_multimodal_pipeline.py # Audio transcription and image ingestion pipelines
+│   │   ├── test_qdrant_mem0.py     # Semantic long-term memory adapter (mocked Mem0/Qdrant)
+│   │   └── test_neo4j_graphiti.py  # Relational temporal graph adapter (mocked Graphiti/Neo4j)
+│   ├── tools/
+│   │   ├── test_registry.py        # @tool discovery, type hint schema generation, dispatch
+│   │   ├── test_image_diffusion.py # Stable Diffusion idle timer and generation
+│   │   ├── test_speech_kokoro.py   # Kokoro TTS Spanish audio synthesis
+│   │   ├── test_web_search.py      # Crawl4AI web extraction
+│   │   └── test_code_inspector.py  # AST Python code self-inspector
+│   ├── security/
+│   │   └── test_json_sessions.py   # Session authorization whitelist and token exchange
+│   ├── telemetry/
+│   │   ├── test_nvidia_smi.py      # Nvidia-SMI parsing
+│   │   └── test_tcp_probe.py       # TCP socket probes
+│   └── logging/
+│       ├── test_setup.py           # Logging configuration
+│       └── test_audit.py           # Reasoning audit JSON logger and 30-day retention pruning
+└── interfaces/
+    ├── test_client.py              # SethClient SDK tests
+    ├── api/
+    │   ├── test_app.py             # FastAPI factory and memory tool schemas
+    │   ├── test_dependencies.py    # Dependency injection providers
+    │   ├── routes/
+    │   │   ├── test_auth.py        # POST /api/register
+    │   │   ├── test_chat.py        # POST /api/chat (SSE)
+    │   │   └── test_status.py      # GET /api/status
+    │   └── middleware/
+    │       ├── test_log_filter.py  # Access log suppression filter
+    │       └── test_pna.py         # Private Network Access middleware
+    ├── web/
+    │   └── test_app.py             # Web TUI static launcher & API probe
+    ├── tui/
+    │   └── test_app.py             # Terminal TUI status panel rendering and user loop
+    └── telegram/
+        ├── test_bot.py             # Telegram bot runner
+        ├── test_handlers.py        # Telegram bot handlers and media processing
+        └── test_session_store.py   # Telegram session store
 ```
 
 ---
@@ -136,7 +162,7 @@ class MockGraphMemory:
 
 ## 4. Layer-by-Layer Test Specifications
 
-### 4.1 Domain Layer (`tests/unit/domain/`)
+### 4.1 Domain Layer (`tests/domain/`)
 
 | Test Module | Key Assertions & Scenarios |
 |---|---|
@@ -146,7 +172,7 @@ class MockGraphMemory:
 
 ---
 
-### 4.2 Application Layer (`tests/unit/application/`)
+### 4.2 Application Layer (`tests/application/`)
 
 #### A. ConversationOrchestrator (`test_orchestrator.py`)
 * **Scenario 1: Single-Turn Streaming Completion (No Tools)**
@@ -165,7 +191,7 @@ class MockGraphMemory:
   * Setup: Mock LLM throws `InferenceEngineError`.
   * Verifies: Orchestrator catches error, yields `StreamEventType.ERROR`, and logs failure in audit record without crashing the server.
 
-#### B. Dynamic Inference Regulator (`test_use_cases.py`)
+#### B. Dynamic Inference Regulator (`use_cases/test_regulate.py`)
 * **Semantic Similarity Vector Modulation:**
   * Technical prompt (`"Optimize PostgreSQL index for B-Tree"`) shifts state toward **Rigorous** ($T \to 0.10$).
   * Creative prompt (`"Generate chaotic glitch poetry"`) shifts state toward **Chaotic** ($T \to 1.30$).
@@ -173,7 +199,7 @@ class MockGraphMemory:
 * **User State Persistence:**
   * Verifies that `UserStateManager` creates and persists `seth_<user_id>.state` atomically under concurrent locks.
 
-#### C. Authentication & Telemetry Use Cases
+#### C. Authentication & Telemetry Use Cases (`use_cases/test_authenticate.py`, `use_cases/test_telemetry.py`)
 * **`AuthenticateSessionUseCase`:**
   * Valid token $\to$ returns `status="ok"`, generates unique 32-character hex UUID, and persists to session store.
   * Invalid token $\to$ returns `status="error"`, `user_id=None`.
@@ -182,9 +208,9 @@ class MockGraphMemory:
 
 ---
 
-### 4.3 Infrastructure Layer (`tests/unit/infrastructure/`)
+### 4.3 Infrastructure Layer (`tests/infrastructure/`)
 
-#### A. LLM Adapters (`test_llm_accumulator.py`, `test_context_guard.py`, `test_vllm_client.py`)
+#### A. LLM Adapters (`llm/test_accumulator.py`, `llm/test_context_guard.py`, `llm/test_vllm_client.py`)
 * **`StreamAccumulator`:**
   * Reconstructs fragmented streaming tool call deltas (e.g. index 0 argument chunks `{"que`, `ry": "te`, `st"}`) into a complete valid JSON `ToolCall`.
   * Accumulates reasoning strings and content strings independently.
@@ -192,7 +218,7 @@ class MockGraphMemory:
   * Accurately calculates available output tokens: `safe_tokens = min(requested, context_limit - input_tokens)`.
   * Prevents context overflows by enforcing minimum 256 token buffer.
 
-#### B. Tool Discovery & Schema Reflection (`test_tool_registry.py`)
+#### B. Tool Discovery & Schema Reflection (`tools/test_registry.py`)
 * **Decorator & Schema Generation:**
   * Verifies that methods marked with `@tool` are discovered.
   * Inspects `Annotated[str, "description"]`, `int`, `float`, `bool`, `Literal["a", "b"]`, and `Optional[T]` to produce compliant JSON Schema parameters.
@@ -200,7 +226,7 @@ class MockGraphMemory:
   * Executes async and sync tool methods.
   * Catches invalid JSON arguments and returns descriptive `ToolResult(is_success=False)`.
 
-#### C. In-Process Generators & VRAM Offload (`test_tools_concrete.py`)
+#### C. In-Process Generators & VRAM Offload (`tools/test_image_diffusion.py`, `tools/test_speech_kokoro.py`, `tools/test_web_search.py`, `tools/test_code_inspector.py`)
 * **`StableDiffusionGenerator` VRAM Timer:**
   * Mocking PyTorch and Diffusers pipeline.
   * Verifies that `generate_image()` schedules `_vram_cleanup_timer()`.
@@ -211,7 +237,7 @@ class MockGraphMemory:
 * **`AstCodeInspector`:**
   * Runs AST parsing against existing Python source files and extracts class/function trees.
 
-#### D. Persistent Memory & Telemetry Probes (`test_jsonl_history.py`, `test_telemetry_probes.py`)
+#### D. Persistent Memory & Telemetry Probes (`memory/test_jsonl_history.py`, `telemetry/test_nvidia_smi.py`, `telemetry/test_tcp_probe.py`)
 * **`JsonlConversationHistory`:**
   * Reads and writes turns to `conversations/history_<user_id>.jsonl`.
   * Verifies sliding window eviction when message count exceeds `max_history`.
@@ -222,9 +248,9 @@ class MockGraphMemory:
 
 ---
 
-### 4.4 Presentation & Interface Layer (`tests/unit/interfaces/`)
+### 4.4 Presentation & Interface Layer (`tests/interfaces/`)
 
-#### A. FastAPI Endpoints (`test_api_routes.py`)
+#### A. FastAPI Endpoints (`api/routes/test_auth.py`, `api/routes/test_chat.py`, `api/routes/test_status.py`, `api/test_app.py`)
 * Uses `httpx.AsyncClient` with `ASGITransport` against `create_app(test_settings)`.
 * **`POST /api/register`:** Tests status codes 200 (authorized) and 400 (bad token).
 * **`POST /api/chat`:**
@@ -232,12 +258,13 @@ class MockGraphMemory:
   * Valid request $\to$ streams SSE lines formatted as `data: {...}\n\n`.
   * Tests multipart audio upload (mocking Whisper transcription) and image upload (encoding Base64).
 * **`GET /api/status`:** Returns HTTP 200 with system status JSON.
+* **`test_create_app_memory_tool_schemas`:** Verifies that memory tools expose valid OpenAPI function schemas with required parameters.
 
-#### B. Unified Async SDK (`test_client_sdk.py`)
+#### B. Unified Async SDK (`test_client.py`)
 * Uses `respx` to mock backend HTTP responses.
 * Tests `register()`, `chat_stream()` (parsing SSE delta chunks), and `get_status()`.
 
-#### C. Telegram Bridge (`test_telegram_bridge.py`)
+#### C. Telegram Bridge (`telegram/test_bot.py`, `telegram/test_handlers.py`, `telegram/test_session_store.py`)
 * Mocks `telegram.Update` and `telegram.ext.ContextTypes`.
 * Verifies `/start` greeting, token authentication handler, message splitting for texts $>4096$ characters preserving markdown code blocks, and audio/photo downloads.
 
@@ -277,18 +304,15 @@ addopts = "-v --tb=short --cov=src --cov-report=term-missing --cov-report=html"
 # 1. Run full test suite with coverage report
 pytest
 
-# 2. Run only fast unit tests
-pytest tests/unit
+# 2. Run specific layer tests
+pytest tests/domain
+pytest tests/application
+pytest tests/infrastructure
+pytest tests/interfaces
 
-# 3. Run specific layer tests
-pytest tests/unit/domain
-pytest tests/unit/application
-pytest tests/unit/infrastructure
-pytest tests/unit/interfaces
-
-# 4. Run tests with keyword filter
+# 3. Run tests with keyword filter
 pytest -k "test_orchestrator"
 
-# 5. Generate HTML coverage report (saved in htmlcov/)
+# 4. Generate HTML coverage report (saved in htmlcov/)
 pytest --cov=src --cov-report=html
 ```

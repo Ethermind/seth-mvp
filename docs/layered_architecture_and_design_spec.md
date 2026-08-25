@@ -124,13 +124,14 @@ flowchart TB
 
 ## 4. Directory & Module Structure
 
-```text
-src/
-├── main.py                     # Unified CLI launcher (api, web, tui, telegram)
-├── _env.example                # Template for environment variables
-├── .env                        # Local runtime secrets (git-ignored)
-├── prompt/
-│   └── seth.md                 # Canonical system prompt and personality rules
+.
+├── docker-compose.yml          # Infrastructure stack (vLLM, Whisper, Qdrant, Neo4j)
+└── src/
+    ├── main.py                 # Unified CLI launcher (api, web, tui, telegram)
+    ├── _env.example            # Template for environment variables
+    ├── .env                    # Local runtime secrets (git-ignored)
+    ├── prompt/
+    │   └── seth.md             # Canonical system prompt and personality rules
 │
 ├── config/                     # Centralized Configuration Layer
 │   ├── __init__.py
@@ -371,10 +372,13 @@ pip install -e ".[all]"
 cp src/_env.example src/.env
 # Edit src/.env with registration tokens and service endpoints
 
-# 3. Launch Backend API (Primary Node)
+# 3. Start Infrastructure Stack (Docker Compose)
+docker compose up -d
+
+# 4. Launch Backend API (Primary Node)
 python -m src.main api --host 127.0.0.1 --port 8080
 
-# 4. Launch Presentation Clients (in separate terminals)
+# 5. Launch Presentation Clients (in separate terminals)
 python -m src.main tui                        # Terminal User Interface
 python -m src.main web --port 5500           # Standalone Web CRT Console
 python -m src.main telegram                  # Telegram Bot Bridge
